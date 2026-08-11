@@ -1,0 +1,62 @@
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Интерактивный прототип шахматки ЖК Ленинский: восемь этажей, фильтр по комнатности, карточка выбранной квартиры</h2>
+<div style="background:#EDEFEA;border-radius:12px;padding:16px;margin:1rem 0 0">
+<div id="flt" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
+<div id="grid" style="display:flex;flex-direction:column;gap:3px"></div>
+<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:11px;color:#4B5A52">
+<span><span style="display:inline-block;width:9px;height:9px;background:#FFFFFF;border:1px solid #33574A;border-radius:2px;vertical-align:-1px"></span> свободна</span>
+<span><span style="display:inline-block;width:9px;height:9px;background:#E5D3AE;border:1px solid #A8823C;border-radius:2px;vertical-align:-1px"></span> бронь</span>
+<span><span style="display:inline-block;width:9px;height:9px;background:#D8DCD7;border:1px solid #B7BEB7;border-radius:2px;vertical-align:-1px"></span> продана</span>
+<span><span style="display:inline-block;width:9px;height:9px;background:#33574A;border-radius:2px;vertical-align:-1px"></span> коммерция</span>
+</div>
+<div id="card" style="background:#FFFFFF;border-radius:10px;padding:14px 16px;margin-top:12px;min-height:96px"></div>
+<p style="font-size:11px;color:#6E8578;margin:10px 0 0">Данные обновлены 11 августа 2026 · демонстрационные цены</p>
+</div>
+<script>
+(function(){
+var types=[{r:0,n:"Студия",a:38.4,k:0},{r:1,n:"1-комнатная",a:44.2,k:10.2},{r:2,n:"2-комнатная",a:58.6,k:12.4},{r:3,n:"3-комнатная",a:76.1,k:13.0}];
+function ti(c){return c<=3?0:c<=7?1:c<=10?2:3;}
+var flats=[];
+for(var f=1;f<=8;f++){for(var c=1;c<=12;c++){
+if(f===1&&c===1){flats.push({f:f,c:c,com:true});continue;}
+var t=types[ti(c)],s=(f*7+c*5)%10,st=s<6?"free":(s<8?"res":"sold");
+var num=(f-1)*12+c-(f===1?0:1);
+var price=Math.round((t.a*72000+f*38000)/1000)*1000;
+flats.push({f:f,c:c,t:t,st:st,num:num,price:price,view:c%2?"двор":"улица"});
+}}
+var filter="all",sel=null;
+var fl=document.getElementById("flt"),gr=document.getElementById("grid"),cd=document.getElementById("card");
+[["all","Все"],["0","Студии"],["1","1-комн."],["2","2-комн."],["3","3-комн."]].forEach(function(o){
+var b=document.createElement("button");b.textContent=o[1];
+b.style.cssText="font-size:12px;padding:6px 12px;border-radius:16px;border:0.5px solid #8C9B92;background:transparent;color:#1F2A26;cursor:pointer";
+b.onclick=function(){filter=o[0];[].forEach.call(fl.children,function(x){x.style.background="transparent";x.style.color="#1F2A26"});
+b.style.background="#33574A";b.style.color="#FFFFFF";draw();};fl.appendChild(b);});
+fl.firstChild.style.background="#33574A";fl.firstChild.style.color="#FFFFFF";
+function draw(){gr.innerHTML="";
+for(var f=8;f>=1;f--){(function(f){
+var row=document.createElement("div");row.style.cssText="display:flex;align-items:center;gap:3px";
+var lb=document.createElement("span");lb.textContent=f;
+lb.style.cssText="width:16px;font-size:11px;color:#6E8578;text-align:right;flex:none";row.appendChild(lb);
+flats.filter(function(x){return x.f===f;}).forEach(function(x){
+var e=document.createElement("div");
+if(x.com){e.style.cssText="flex:1;height:26px;background:#33574A;border-radius:3px";row.appendChild(e);return;}
+var on=(filter==="all"||String(x.t.r)===filter);
+var bg=x.st==="free"?"#FFFFFF":(x.st==="res"?"#E5D3AE":"#D8DCD7");
+var bd=x.st==="free"?"#33574A":(x.st==="res"?"#A8823C":"#B7BEB7");
+e.textContent=x.num;
+e.style.cssText="flex:1;height:26px;background:"+bg+";border:1px solid "+bd+";border-radius:3px;font-size:11px;color:#1F2A26;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:"+(on?"1":"0.25");
+if(sel&&sel.num===x.num){e.style.outline="2px solid #1F2A26";}
+e.onclick=function(){sel=x;draw();show(x);};row.appendChild(e);});
+gr.appendChild(row);})(f);}}
+function show(x){
+if(x.st==="sold"){cd.innerHTML='<p style="font-size:14px;font-weight:500;color:#1F2A26;margin:0 0 4px">Квартира '+x.num+' продана</p><p style="font-size:13px;color:#4B5A52;margin:0">Посмотрите похожие: '+x.t.n.toLowerCase()+', '+x.t.a+' м²</p>';return;}
+cd.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start">'
++'<div style="flex:1;min-width:150px"><p style="font-size:15px;font-weight:500;color:#1F2A26;margin:0 0 4px">'+x.t.n+', '+x.t.a+' м²</p>'
++'<p style="font-size:12px;color:#4B5A52;margin:0 0 2px">Квартира '+x.num+' · '+x.f+' этаж · окна во '+(x.view==="двор"?"двор":"двор и улицу")+'</p>'
++(x.t.k?'<p style="font-size:12px;color:#4B5A52;margin:0">Кухня '+x.t.k+' м²</p>':'')
++'<p style="font-size:18px;font-weight:500;color:#1F2A26;margin:8px 0 0">'+x.price.toLocaleString("ru-RU")+' ₽</p>'
++(x.st==="res"?'<p style="font-size:12px;color:#8A6A2E;margin:4px 0 0">Забронирована</p>':'')+'</div>'
++'<div style="display:flex;flex-direction:column;gap:6px"><span style="background:#33574A;color:#fff;font-size:12px;padding:9px 14px;border-radius:8px;text-align:center">Узнать подробнее</span>'
++'<span style="border:0.5px solid #8C9B92;color:#1F2A26;font-size:12px;padding:9px 14px;border-radius:8px;text-align:center">Показать планировку</span></div></div>';}
+draw();cd.innerHTML='<p style="font-size:13px;color:#4B5A52;margin:0">Выберите квартиру на схеме — откроется карточка с площадью, ценой и планировкой.</p>';
+})();
+</script>
